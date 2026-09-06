@@ -1,9 +1,13 @@
 var PROPS = PropertiesService.getScriptProperties();
+var DISCORD_COLOR_GREEN = 5763719;
+var DISCORD_COLOR_RED = 15548997;
+function toBool_(value) {
+  return String(value).toLowerCase() === 'true';
+}
 function getConfig_() {
   var url = PROPS.getProperty('SUPABASE_URL');
   var key = PROPS.getProperty('SUPABASE_KEY');
   var table = PROPS.getProperty('SUPABASE_TABLE');
-  var notifyEmail = PROPS.getProperty('NOTIFY_EMAIL') || Session.getEffectiveUser().getEmail();
   if (!url || !key) {
     throw new Error('SUPABASE_URL と SUPABASE_KEY をスクリプトプロパティに設定してください。');
   }
@@ -11,7 +15,10 @@ function getConfig_() {
     url: url.replace(/\/$/, ''),
     key: key,
     table: table,
-    notifyEmail: notifyEmail,
+    notifyEmail: PROPS.getProperty('NOTIFY_EMAIL'),
+    mailOnlyOnFailure: toBool_(PROPS.getProperty('MAIL_ONLY_ON_FAILURE')),
+    discordWebhookUrl: PROPS.getProperty('DISCORD_WEBHOOK_URL'),
+    discordOnlyOnFailure: toBool_(PROPS.getProperty('DISCORD_ONLY_ON_FAILURE')),
   };
 }
 function pingSupabase() {
@@ -36,31 +43,68 @@ function pingSupabase() {
   return status;
 }
 function keepAlive() {
+  var success = true;
+  var errorMessage = '';
   try {
     var status = pingSupabase();
     Logger.log('Supabase keep-alive 成功 (status: ' + status + ')');
   } catch (err) {
-    Logger.log('Supabase keep-alive 失敗: ' + err.message);
-    notifyFailure_(err);
-    throw err;
+    success = false;
+    errorMessage = err.message;
+    Logger.log('Supabase keep-alive 失敗: ' + errorMessage);
+  }
+  notifyMail_(success, errorMessage);
+  notifyDiscord_(success, errorMessage);
+  if (!success) {
+    throw new Error(errorMessage);
   }
 }
-function notifyFailure_(err) {
+function notifyMail_(success, errorMessage) {
+  var config = getConfig_();
+  if (!config.notifyEmail) return;
+  if (config.mailOnlyOnFailure && success) return;
   try {
-    var config = getConfig_();
-    if (!config.notifyEmail) return;
     MailApp.sendEmail({
       to: config.notifyEmail,
-      subject: '[Supabase Extender] Keep-alive 実行に失敗しました',
+      subject: success
+        ? '[Supabase Extender] Keep-alive 成功'
+        : '[Supabase Extender] Keep-alive 失敗',
       body:
-        'Supabaseプロジェクトへの定期アクセスに失敗しました。\n\n' +
-        'エラー内容:\n' +
-        err.message +
+        (success
+          ? 'Supabaseプロジェクトへの定期アクセスに成功しました。'
+          : 'Supabaseプロジェクトへの定期アクセスに失敗しました。\n\nエラー内容:\n' + errorMessage) +
         '\n\n実行時刻: ' +
         new Date().toString(),
     });
   } catch (mailErr) {
-    Logger.log('失敗通知メールの送信にも失敗しました: ' + mailErr.message);
+    Logger.log('通知メールの送信に失敗しました: ' + mailErr.message);
+  }
+}
+function notifyDiscord_(success, errorMessage) {
+  var config = getConfig_();
+  if (!config.discordWebhookUrl) return;
+  if (config.discordOnlyOnFailure && success) return;
+  var payload = {
+    embeds: [
+      {
+        title: success ? 'Keep-alive 成功' : 'Keep-alive 失敗',
+        description: success
+          ? 'Supabaseプロジェクトへの定期アクセスに成功しました。'
+          : 'Supabaseプロジェクトへの定期アクセスに失敗しました。\n\n' + errorMessage,
+        color: success ? DISCORD_COLOR_GREEN : DISCORD_COLOR_RED,
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  };
+  try {
+    UrlFetchApp.fetch(config.discordWebhookUrl, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    });
+  } catch (webhookErr) {
+    Logger.log('Discord通知の送信に失敗しました: ' + webhookErr.message);
   }
 }
 function createWeeklyTrigger() {

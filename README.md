@@ -8,7 +8,7 @@ Supabaseの無料プランは、一定期間APIアクセスがないとプロジ
 
 ## 構成
 
-- `src/Code.js` — 本体スクリプト(Supabaseへのping、週次トリガー、失敗時メール通知)
+- `src/Code.js` — 本体スクリプト(Supabaseへのping、週次トリガー、メール/Discord通知)
 - `src/appsscript.json` — Apps Scriptのマニフェスト
 - [clasp](https://github.com/google/clasp) を使ってこのリポジトリのコードをGASプロジェクトにpushする
 
@@ -60,7 +60,10 @@ npm run open
 | `SUPABASE_URL` | ✅ | 例: `https://xxxxxxxxxxxx.supabase.co` |
 | `SUPABASE_KEY` | ✅ | Supabaseの `anon` キー(Settings > API から取得) |
 | `SUPABASE_TABLE` | 任意 | 存在確認するテーブル名。空欄の場合はREST APIのルートに軽量アクセスするだけになる |
-| `NOTIFY_EMAIL` | 任意 | 実行失敗時の通知先メールアドレス。空欄なら実行アカウント自身のメールアドレスに送信される |
+| `NOTIFY_EMAIL` | 任意 | 実行結果の通知先メールアドレス。空欄ならメール通知は送信されない |
+| `MAIL_ONLY_ON_FAILURE` | 任意 | `true` にすると失敗時のみメールを送信する。デフォルト(`false`または未設定)では成功時・失敗時とも送信される |
+| `DISCORD_WEBHOOK_URL` | 任意 | 実行結果を送信するDiscordのWebhook URL。空欄ならDiscord通知は送信されない |
+| `DISCORD_ONLY_ON_FAILURE` | 任意 | `true` にすると失敗時のみDiscordへ送信する。デフォルト(`false`または未設定)では成功時・失敗時とも送信される |
 
 ### 5. 動作確認
 
@@ -79,7 +82,7 @@ npm run open
 
 いずれもSupabaseのAPI Gateway(PostgREST)へのリクエストとしてカウントされ、プロジェクトの活動として認識される。実際のテーブルへのアクセスを確実にしたい場合は `SUPABASE_TABLE` の設定を推奨する。
 
-失敗時(ネットワークエラー、APIキー無効、ステータスコードが200番台以外など)は `NOTIFY_EMAIL` 宛にエラー内容をメール通知する。
+実行のたびに `NOTIFY_EMAIL` と `DISCORD_WEBHOOK_URL` へ結果を通知する(それぞれ設定されている場合のみ)。Discordの通知はembedで送信され、成功時は緑、失敗時(ネットワークエラー、APIキー無効、ステータスコードが200番台以外など)は赤の色になる。`MAIL_ONLY_ON_FAILURE` / `DISCORD_ONLY_ON_FAILURE` を `true` にすると、それぞれ失敗時のみの通知に絞れる。
 
 ## 注意事項
 
