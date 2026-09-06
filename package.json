@@ -6,6 +6,7 @@
   "scripts": {
     "login": "clasp login",
     "create": "clasp create-script --type standalone --title \"Supabase Extender\" --rootDir ./src",
+    "postcreate": "git checkout -- src/appsscript.json",
     "push": "clasp push",
     "open": "clasp open-script",
     "logs": "clasp logs"

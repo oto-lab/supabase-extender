@@ -31,7 +31,7 @@ npm run login
 npm run create
 ```
 
-これでこのリポジトリと紐づいた新しいスタンドアロンのGASプロジェクトが作成され、`.clasp.json` が生成される(このファイルは各自の環境固有のためgit管理対象外)。
+これでこのリポジトリと紐づいた新しいスタンドアロンのGASプロジェクトが作成され、`.clasp.json` が生成される(このファイルは各自の環境固有のためgit管理対象外)。なお `clasp create-script` は新規プロジェクトの初期マニフェストで `src/appsscript.json` を上書きするが、`npm run create` 実行後に自動で `git checkout -- src/appsscript.json` が走りリポジトリの内容に戻すため、手動での復元は不要。
 
 既存のGASプロジェクトに紐づけたい場合は代わりに以下を実行する。
 
