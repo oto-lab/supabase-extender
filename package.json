@@ -1,0 +1,17 @@
+{
+  "name": "supabase-extender",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Supabaseの無料プロジェクトが非アクティブによる一時停止/削除にならないよう、Google Apps Scriptで定期的にpingするツール",
+  "scripts": {
+    "login": "clasp login",
+    "create": "clasp create-script --type standalone --title \"Supabase Extender\" --rootDir ./src",
+    "push": "clasp push",
+    "open": "clasp open-script",
+    "logs": "clasp logs"
+  },
+  "license": "WTFPL",
+  "devDependencies": {
+    "@google/clasp": "^3.4.1"
+  }
+}
