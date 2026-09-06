@@ -1,5 +1,7 @@
 # Supabase Extender
 
+[![技術者倫理|遵守済み](https://gijutsusharin.li/badge.svg)](https://gijutsusharin.li)
+
 Supabaseの無料プランは、一定期間APIアクセスがないとプロジェクトが一時停止され、
 さらに放置するとデータが削除されてしまう。
 
